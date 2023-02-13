@@ -1,12 +1,12 @@
 ﻿using HeritageDemo.Characters;
 
-Character character1 = new Character("Toto", ConsoleColor.Red);
-Character character2 = new Character("Tata", ConsoleColor.Green);
+Character character1 = new Nazgul("Nazgul", ConsoleColor.Red, agility:1, constitution:1);
+Character character2 = new Hobbit("Hobbit", ConsoleColor.Green, life:10000);
 
 while (character1.IsAlive && character2.IsAlive)
 {
-    int Initiative1 = character1.GetInitiative();
-    int Initiative2 = character2.GetInitiative();
+    int Initiative1 = character1.Initiative();
+    int Initiative2 = character2.Initiative();
     Console.ForegroundColor = ConsoleColor.White;
     if (Initiative1 > Initiative2)
     {

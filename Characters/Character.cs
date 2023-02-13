@@ -6,15 +6,19 @@ using System.Threading.Tasks;
 
 namespace HeritageDemo.Characters
 {
+    public enum AttackType { NONE = 0, FIRE = 1, WATER = 2, EARTH = 3, WIND = 4 };
+
     internal class Character
     {
-        public string Name { get; set; }
-        public int Strength { get; private set; }
-        public int Agility { get; private set; }
-        public int Dexterity { get;  private set; }
-        public int Constitution { get; private set;}
+        public string Name;
+        public int Strength;
+        public int Agility;
+        public int Dexterity;
+        public int Constitution;
 
-        public int Life { get; private set; }
+        public AttackType attackType;
+
+        public int Life;
 
         public bool IsAlive => Life > 0;
 
@@ -38,42 +42,74 @@ namespace HeritageDemo.Characters
             return random.NextSingle()*2;
         }
 
-        public int GetInitiative()
+        public int Initiative()
         {
-            int initiative = (int)(Agility * Dexterity * RandomRoll());
+            if (!IsAlive) return 0;
+            int initiative = (int)(Agility * Dexterity * RandomInitiativeRoll());
             Console.ForegroundColor = color;
             Console.WriteLine($"{Name}'s initiative is {initiative}");
             //Console.ForegroundColor = ConsoleColor.White;
             return initiative;
         }
 
-        public virtual void Attack(Character target)
+        public virtual bool Attack(Character target)
         {
-            if (!IsAlive) return;
-            int attackRoll = (int)(Strength * Dexterity * RandomRoll());
+            if (!IsAlive) return false;
+            int attackRoll = (int)(Strength * Dexterity * RandomAttackRoll());
             Console.ForegroundColor = color;
             Console.WriteLine($"{Name} attacks {target.Name} with {attackRoll}");
             //Console.ForegroundColor = ConsoleColor.White;
-            target.Defend(this,attackRoll);
+            return !target.Defend(this,attackRoll);
+        }
+        public virtual float RandomDefenseRoll()
+        {
+            return RandomRoll();
         }
 
-        public virtual void Defend(Character attacker, int attackRoll)
+        public virtual float RandomAttackRoll()
         {
-            int defenseRoll = (int)(Agility * Constitution * RandomRoll());
+            return RandomRoll();
+        }
+
+        public virtual float RandomInitiativeRoll()
+        {
+            return RandomRoll();
+        }
+
+        public virtual bool Defend(Character attacker, int attackRoll)
+        {
+            if (!IsAlive) return false;
+            bool defenseResult = false;
+            int defenseRoll = (int)(Agility * Constitution * RandomDefenseRoll());
             int Damages = attackRoll - defenseRoll;
             string result = $"{Name} defends against {attacker.Name} attack with {defenseRoll}.";
             if (Damages > 0)
             {
-                Life -= Damages;
+                TakeDamages(attacker.attackType,Damages);
                 result += $" {Name} take {Damages} damages. Current life :{Life}.";
             }
             else
             {
                 result += $" {Name}'s defense is successful.";
+                defenseResult = true;
             }
             Console.ForegroundColor = color;
             Console.WriteLine(result);
             //Console.ForegroundColor = ConsoleColor.White;
+            return defenseResult;
+        }
+
+        public virtual void TakeDamages(AttackType attackType, int damages)
+        {
+            Life -= damages;
+            Console.WriteLine($" {Name} take {damages} damages. Current life :{Life}.");
+            if(this is I_Vulnerable vulnerable)
+                ManageVulnerabilities(attackType, damages, this);
+        }
+
+        public void ManageVulnerabilities(AttackType attackType, int damages, Character vulnerable)
+        {
+            ((I_Vulnerable)vulnerable).Vulnerability(attackType, damages,vulnerable);
         }
 
         protected int NameToInt(string name)
